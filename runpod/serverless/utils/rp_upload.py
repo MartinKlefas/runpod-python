@@ -95,11 +95,15 @@ def get_boto_client(
 # ---------------------------------------------------------------------------- #
 #                                 Upload Image                                 #
 # ---------------------------------------------------------------------------- #
-def upload_image(job_id, image_location, result_index=0, results_list=None): # pragma: no cover
+def upload_image(job_id, image_location, result_index=0, results_list=None, rename_file=True): # pragma: no cover
     '''
     Upload a single file to bucket storage.
     '''
-    image_name = str(uuid.uuid4())[:8]
+    if rename_file:
+        image_name = str(uuid.uuid4())[:8]
+    else:
+        image_name, _ = os.path.splitext(os.path.basename(image_location))
+
     boto_client, _ = get_boto_client()
     file_extension = os.path.splitext(image_location)[1]
 
@@ -162,7 +166,7 @@ def upload_image(job_id, image_location, result_index=0, results_list=None): # p
 # ---------------------------------------------------------------------------- #
 #                                Files To Upload                               #
 # ---------------------------------------------------------------------------- #
-def files(job_id, file_list): # pragma: no cover
+def files(job_id, file_list, rename=True): # pragma: no cover
     '''
     Uploads a list of files in parallel.
     Once all files are uploaded, the function returns the presigned URLs list.
@@ -173,7 +177,7 @@ def files(job_id, file_list): # pragma: no cover
     for index, selected_file in enumerate(file_list):
         new_upload = threading.Thread(
             target=upload_image,
-            args=(job_id, selected_file, index, file_urls)
+            args=(job_id, selected_file, index, file_urls, rename)
         )
 
         new_upload.start()
